@@ -1,0 +1,130 @@
+/* Custom easing curves — never use the weak CSS defaults */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.btn {
+  position: relative;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  overflow: hidden;
+
+  /* Only animate what we need — never `transition: all` */
+  transition:
+    transform 160ms var(--ease-out),
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+/* Press feedback — instant physical confirmation */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover {
+    background: #222;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    transform: translateY(-1px);
+  }
+}
+
+.btn:active {
+  transform: scale(0.97); /* subtle; scale also shrinks children proportionally */
+  box-shadow: none;
+}
+
+/* Disabled states */
+.btn[data-state="loading"],
+.btn[data-state="success"],
+.btn[data-state="error"] {
+  cursor: default;
+}
+
+.btn[data-state="success"] { background: #16a34a; }
+.btn[data-state="error"]   { background: #dc2626; }
+
+/* ── Content crossfade ──────────────────────────────────────────────────── */
+.btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  /* Blur bridges the visual gap during state swaps — prevents two overlapping
+     states from looking like distinct objects flickering */
+  transition:
+    opacity 200ms ease,
+    filter 200ms ease;
+}
+
+/* Blur content during state transitions */
+.btn-content[data-state="loading"],
+.btn-content[data-state="success"],
+.btn-content[data-state="error"] {
+  /* Applied for one frame before new content mounts via @starting-style below */
+}
+
+/* ── Enter animation for content ────────────────────────────────────────── */
+/* Nothing in the real world appears from nothing — start at 0.95, not 0 */
+.btn-content {
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity 150ms var(--ease-out),
+    transform 150ms var(--ease-out),
+    filter 150ms ease;
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.92);
+    filter: blur(2px);
+  }
+}
+
+/* ── Spinner ────────────────────────────────────────────────────────────── */
+.spinner {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  /* Linear for constant motion; faster = feels more responsive */
+  animation: spin 500ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Ripple on click (clip-path reveal) ─────────────────────────────────── */
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.08);
+  /* Reveal from left — asymmetric: slow deliberate press, fast exit */
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 200ms var(--ease-out);
+  pointer-events: none;
+}
+
+.btn:active::after {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 600ms linear; /* slow on press = deliberate */
+}
+
+/* ── Reduced motion — keep opacity, drop all movement ───────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btn-content,
+  .btn::after {
+    transition: opacity 150ms ease, background 150ms ease;
+    animation: none;
+  }
+  .btn:active { transform: none; }
+}
